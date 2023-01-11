@@ -1,5 +1,5 @@
 @inherits LayoutComponentBase
-@using BlazorRouter.Sample.Pages
+@using Brouter.Demo.Pages
 
 <div class="page">
     <div class="sidebar">
@@ -12,44 +12,44 @@
         </div>
 
         <div class="content px-4">
-            <Switch>
-                <Route Template="/">
+            <MsynkBrouter>
+                <Route Path="/">
                     <Home CountValue="@countValue"></Home>
                 </Route>
-                <Route Template="/counter">
+                <Route Path="/counter">
                     <Counter @bind-CurrentCount="countValue" ChangeCount="@ChangeCountValue"></Counter>
                 </Route>
-                <Route Template="/counter/{init:int}">
+                <Route Path="/counter/{init:int}">
                     <Counter @bind-CurrentCount="countValue" ChangeCount="@ChangeCountValue"></Counter>
                 </Route>
-                <Route Template="/fetchdata">
+                <Route Path="/fetchdata">
                     <FetchData />
                 </Route>
-                <Route Template="/*/test">
+                <Route Path="/*/test">
                     <p>Test page</p>
                 </Route>
-                <Route Template="/nested-route/{id:int}/*">
-                    <Switch>
-                        <Route Template="/nested-route/{id:int}">
+                <Route Path="/nested-route/{id:int}/*">
+                    <MsynkBrouter>
+                        <Route Path="/nested-route/{id:int}">
                             <FetchData Value="1" />
                         </Route>
-                        <Route Template="/nested-route/{id:int}/hello">
+                        <Route Path="/nested-route/{id:int}/hello">
                             <FetchData Value="2" />
                         </Route>
-                        <Route Template="/nested-route/{id:int}/world">
+                        <Route Path="/nested-route/{id:int}/world">
                             <FetchData Value="3" />
                         </Route>
                         <Route>
                             <h1 class="text-danger">Error</h1>
                             <p>Nested: Sorry, there's nothing at this address.</p>
                         </Route>
-                    </Switch>
+                    </MsynkBrouter>
                 </Route>
                 <Route>
                     <h1 class="text-danger">Error</h1>
                     <p>Sorry, there's nothing at this address.</p>
                 </Route>
-            </Switch>
+            </MsynkBrouter>
         </div>
     </div>
 </div>

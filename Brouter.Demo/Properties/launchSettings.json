@@ -16,7 +16,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "BlazorRouter.Sample": {
+    "Brouter.Demo": {
       "commandName": "Project",
       "dotnetRunMessages": "true",
       "launchBrowser": true,
