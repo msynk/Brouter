@@ -23,10 +23,10 @@ internal abstract class RouteConstraint
         }
 
         var newInstance = CreateRouteConstraint(constraint);
-        newInstance.Constraint = constraint;
-        if (newInstance != null)
+        if (newInstance is not null)
         {
             _CachedConstraints[constraint] = newInstance;
+            newInstance.Constraint = constraint;
             return newInstance;
         }
 

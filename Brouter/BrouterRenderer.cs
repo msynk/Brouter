@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Rendering;
+using System.Data;
 
 namespace Brouter;
 
@@ -43,7 +44,7 @@ internal class BrouterRenderer
 
     private void CreateParametersCascadingValues(int seq)
     {
-        if (_parameters is null)
+        if (_parameters is null || _parameters.Count == 0)
         {
             AddRouteParams(_builder, seq);
             return;
@@ -56,7 +57,7 @@ internal class BrouterRenderer
     {
         var p = arr[idx];
 
-        seq = OpenComp(builder, p.Key, p.Value, seq);
+        seq = AddComponent(builder, p.Key, p.Value, seq);
 
         builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 =>
         {
@@ -81,7 +82,7 @@ internal class BrouterRenderer
         builder.CloseComponent();
     }
 
-    private int OpenComp<T>(RenderTreeBuilder builder, string name, T value, int seq)
+    private int AddComponent<T>(RenderTreeBuilder builder, string name, T value, int seq)
     {
         var constraints = _constraints[name];
         if (constraints is null || constraints.Length == 0)
@@ -90,44 +91,63 @@ internal class BrouterRenderer
         }
         else
         {
-            var constraint = constraints[0]; // TODO: improve to consider all constrains
-            if (constraint is "int")
+            if (OpenConstrainedComp(builder, constraints, value, seq++) is false)
             {
-                builder.OpenComponent<CascadingValue<int>>(seq++);
+                builder.OpenComponent<CascadingValue<T>>(seq);
             }
-            else if (constraint is "bool")
-            {
-                builder.OpenComponent<CascadingValue<bool>>(seq++);
-            }
-            else if (constraint is "guid")
-            {
-                builder.OpenComponent<CascadingValue<Guid>>(seq++);
-            }
-            else if (constraint is "long")
-            {
-                builder.OpenComponent<CascadingValue<long>>(seq++);
-            }
-            else if (constraint is "float")
-            {
-                builder.OpenComponent<CascadingValue<float>>(seq++);
-            }
-            else if (constraint is "double")
-            {
-                builder.OpenComponent<CascadingValue<double>>(seq++);
-            }
-            else if (constraint is "decimal")
-            {
-                builder.OpenComponent<CascadingValue<decimal>>(seq++);
-            }
-            else if (constraint is "datetime")
-            {
-                builder.OpenComponent<CascadingValue<DateTime>>(seq++);
-            }
+            //builder.OpenComponent<CascadingValue<int>>(seq++);
         }
         builder.AddAttribute(seq++, "Name", name);
         builder.AddAttribute(seq++, "Value", value);
         return seq;
     }
 
+    private static bool OpenConstrainedComp(RenderTreeBuilder builder, string[] constraints, object value, int seq)
+    {
+        //foreach (var constraint in constraints)
+        //{
+        //    if (CheckConstraint(constraint, value))
+        //    {
+        //        OpenComp(builder, constraint, seq);
+        //        return true;
+        //    }
+        //}
+        //return false;
 
+        OpenComp(builder, constraints[^1], seq);
+
+        return true;
+    }
+
+    private static bool CheckConstraint(string constraint, object value)
+    {
+        return constraint switch
+        {
+            "int" => int.TryParse(value.ToString(), out int result),
+            "bool" => bool.TryParse(value.ToString(), out bool result),
+            "guid" => Guid.TryParse(value.ToString(), out Guid result),
+            "long" => long.TryParse(value.ToString(), out long result),
+            "float" => float.TryParse(value.ToString(), out float result),
+            "double" => double.TryParse(value.ToString(), out double result),
+            "decimal" => decimal.TryParse(value.ToString(), out decimal result),
+            "datetime" => DateTime.TryParse(value.ToString(), out DateTime result),
+            _ => false
+        };
+    }
+
+    private static void OpenComp(RenderTreeBuilder builder, string constraint, int seq)
+    {
+        (constraint switch
+        {
+            "int" => (Action)(() => builder.OpenComponent<CascadingValue<int>>(seq)),
+            "bool" => () => builder.OpenComponent<CascadingValue<bool>>(seq),
+            "guid" => () => builder.OpenComponent<CascadingValue<Guid>>(seq),
+            "long" => () => builder.OpenComponent<CascadingValue<long>>(seq),
+            "float" => () => builder.OpenComponent<CascadingValue<float>>(seq),
+            "double" => () => builder.OpenComponent<CascadingValue<double>>(seq),
+            "decimal" => () => builder.OpenComponent<CascadingValue<decimal>>(seq),
+            "datetime" => () => builder.OpenComponent<CascadingValue<DateTime>>(seq),
+            _ => () => { }
+        })();
+    }
 }

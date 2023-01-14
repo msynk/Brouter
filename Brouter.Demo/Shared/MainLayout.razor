@@ -22,6 +22,9 @@
                 <Route Path="/counter/{init:int}">
                     <Counter @bind-CurrentCount="countValue" ChangeCount="@ChangeCountValue"></Counter>
                 </Route>
+                <Route Path="/counter/multi/{id:int:long}/{age:long:decimal:double}/{name}">
+                    <Counter />
+                </Route>
                 <Route Path="/fetchdata">
                     <FetchData />
                 </Route>
