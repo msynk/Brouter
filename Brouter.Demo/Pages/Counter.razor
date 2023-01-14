@@ -4,23 +4,34 @@
 
 <button class="btn btn-primary" @onclick="() => ChangeCount(CurrentCount + 1)">Click me</button>
 
+<br />
+
+<div>Init: @Init</div>
+
 @code {
     [Parameter] public int CurrentCount { get; set; } = 0;
     [Parameter] public EventCallback<int> CurrentCountChanged { get; set; }
     [Parameter] public Action<int> ChangeCount { get; set; }
-    [CascadingParameter(Name = "RouteParameters")] IDictionary<string, object> parameters { get; set; }
+    
+    [CascadingParameter(Name = "init")] int Init { get; set; }
+    [CascadingParameter(Name = "RouteParameters")] IDictionary<string, object> Parameters { get; set; }
+
     private bool parameterHasSet = false;
 
     protected override Task OnParametersSetAsync()
     {
         if (parameterHasSet) return Task.CompletedTask;
+
         parameterHasSet = true;
+        
         base.OnParametersSetAsync();
-        if (parameters != null)
+        
+        if (Parameters != null)
         {
-            CurrentCount = (int)parameters["init"];
+            CurrentCount = (int)Parameters["init"];
             ChangeCount(CurrentCount);
         }
+        
         return Task.CompletedTask;
     }
 }

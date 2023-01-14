@@ -14,7 +14,7 @@ internal class PathSegment
     {
         IsParameter = isParameter;
 
-        if (!isParameter || segment.IndexOf(':') < 0)
+        if (isParameter is false || segment.IndexOf(':') < 0)
         {
             Value = segment;
             Constraints = Array.Empty<RouteConstraint>();
@@ -29,7 +29,7 @@ internal class PathSegment
 
             Value = tokens[0];
             Constraints = tokens.Skip(1)
-                .Select(token => RouteConstraint.Parse(path, segment, token))
+                .Select(constraint => RouteConstraint.Parse(path, segment, constraint))
                 .ToArray();
         }
     }
@@ -42,7 +42,7 @@ internal class PathSegment
 
             foreach (var constraint in Constraints)
             {
-                if (!constraint.Match(pathSegment, out matchedParameterValue))
+                if (constraint.TryMatch(pathSegment, out matchedParameterValue) is false)
                 {
                     return false;
                 }

@@ -10,6 +10,7 @@ internal class RouteContext
     public bool IsPrefix { get; set; }
     public RenderFragment Fragment { get; set; }
     public IDictionary<string, object> Parameters { get; set; }
+    public IDictionary<string, string[]> Constraints { get; set; }
 
     public RouteContext(string path)
     {

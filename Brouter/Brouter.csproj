@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Authors>msynk</Authors>
     <Description>An awesome router for Blazor.</Description>
     <Copyright>msynk</Copyright>

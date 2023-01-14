@@ -35,13 +35,14 @@ internal class RouteEntry
 
         // Parameters will be lazily initialized.
         IDictionary<string, object> parameters = null;
+        IDictionary<string, string[]> constraints = null;
 
         for (int i = 0; i < RoutePath.Segments.Length; i++)
         {
-            var segment = RoutePath.Segments[i];
-            var pathSegment = i < context.Segments.Length ? context.Segments[i] : string.Empty;
+            var pathSegment = RoutePath.Segments[i];
+            var segment = i < context.Segments.Length ? context.Segments[i] : string.Empty;
 
-            if (segment.TryMatch(pathSegment, out var matchedParameterValue) is false)
+            if (pathSegment.TryMatch(segment, out var matchedParameterValue) is false)
             {
                 context.Fragment = null;
                 return;
@@ -50,26 +51,26 @@ internal class RouteEntry
             context.Fragment = Fragment;
             context.Path = RoutePath.Path;
 
-            if (segment.IsParameter)
+            if (pathSegment.IsParameter)
             {
-                GetParameters()[segment.Value] = matchedParameterValue;
+                InitParameters();
+                parameters[pathSegment.Value] = matchedParameterValue;
+                constraints[pathSegment.Value] = pathSegment.Constraints.Select(rc => rc.Constraint).ToArray();
             }
         }
 
         context.Fragment = Fragment;
         context.Path = RoutePath.Path;
         context.Parameters = parameters;
+        context.Constraints = constraints;
 
-        IDictionary<string, object> GetParameters() => (parameters = parameters == null ? new Dictionary<string, object>() : parameters);
-    }
-
-    private bool IsContextInvalid(RouteContext context)
-    {
-        bool segmentsMatch = RoutePath.Segments.Length != context.Segments.Length;
-        bool zeroSegments = RoutePath.Segments.Length == 0;
-        bool lastSegmentStar = RoutePath.Segments[^1].Value == "*" && RoutePath.Segments.Length - context.Segments.Length == 1;
-        bool lastSegmentDoubleStars = (RoutePath.Segments[^1].Value == "**" && context.Segments.Length >= RoutePath.Segments.Length - 1);
-
-        return segmentsMatch && (zeroSegments || (lastSegmentStar is false && lastSegmentDoubleStars is false));
+        void InitParameters()
+        {
+            if (parameters is null)
+            {
+                parameters = new Dictionary<string, object>();
+                constraints = new Dictionary<string, string[]>();
+            }
+        };
     }
 }

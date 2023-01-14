@@ -15,7 +15,7 @@ internal class TypeRouteConstraint<T> : RouteConstraint
         _parser = parser;
     }
 
-    public override bool Match(string pathSegment, out object convertedValue)
+    public override bool TryMatch(string pathSegment, out object convertedValue)
     {
         if (_parser(pathSegment, out var result))
         {

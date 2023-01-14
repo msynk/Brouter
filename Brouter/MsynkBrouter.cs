@@ -12,7 +12,8 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
     private string _location = string.Empty;
     private RenderFragment _currentFragment;
     private IDictionary<string, object> _parameters;
-    private readonly RouteTable _routeTable = new RouteTable();
+    private IDictionary<string, string[]> _constraints;
+    private readonly RouteTable _routeTable = new();
 
     [Inject] private INavigationInterception _navInterception { get; set; }
     [Inject] private NavigationManager _navManager { get; set; }
@@ -38,8 +39,17 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
     {
         base.BuildRenderTree(builder);
         var seq = 0;
-        seq = CreateCascadingValue(builder, seq, "Brouter", this, ChildContent);
-        _ = CreateCascadingValue(builder, seq, "RouteParameters", _parameters, _currentFragment);
+        CreateBrouterCascadingValue(this);
+        CreateParametersCascadingValues(builder, seq);
+
+        void CreateBrouterCascadingValue<TValue>(TValue value)
+        {
+            builder.OpenComponent<CascadingValue<TValue>>(seq++);
+            builder.AddAttribute(seq++, "Name", "Brouter");
+            builder.AddAttribute(seq++, "Value", value);
+            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq, ChildContent)));
+            builder.CloseComponent();
+        }
     }
 
     protected override void OnInitialized()
@@ -59,13 +69,93 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
         }
     }
 
-    private static int CreateCascadingValue<TValue>(RenderTreeBuilder builder, int seq, string name, TValue value, RenderFragment child)
+    private void CreateParametersCascadingValues(RenderTreeBuilder builder, int seq)
     {
-        builder.OpenComponent<CascadingValue<TValue>>(seq++);
+        seq++;
+
+        if (_parameters is null)
+        {
+            AddRouteParams(builder, seq);
+            return;
+        };
+
+        RecursiveCreate(builder, 0, seq, _parameters.ToArray());
+    }
+
+    private void RecursiveCreate(RenderTreeBuilder builder, int idx, int seq, KeyValuePair<string, object>[] arr)
+    {
+        var p = arr[idx];
+
+        seq = OpenComp(builder, p.Key, p.Value, seq);
+
+        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 =>
+        {
+            if (++idx == arr.Length)
+            {
+                AddRouteParams(builder2, seq);
+                return;
+            }
+
+            RecursiveCreate(builder2, idx, seq, arr);
+        }));
+
+        builder.CloseComponent();
+    }
+
+    private void AddRouteParams(RenderTreeBuilder builder, int seq)
+    {
+        builder.OpenComponent<CascadingValue<IDictionary<string,object>>>(seq++);
+        builder.AddAttribute(seq++, "Name", "RouteParameters");
+        builder.AddAttribute(seq++, "Value", _parameters);
+        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq, _currentFragment)));
+        builder.CloseComponent();
+    }
+
+    private int OpenComp<T>(RenderTreeBuilder builder, string name, T value, int seq)
+    {
+        var constraints = _constraints[name];
+        if (constraints is null || constraints.Length == 0)
+        {
+            builder.OpenComponent<CascadingValue<T>>(seq++);
+        }
+        else
+        {
+            var constraint = constraints[0]; // TODO: improve to consider all constrains
+            if (constraint is "int")
+            {
+                builder.OpenComponent<CascadingValue<int>>(seq++);
+            }
+            else if (constraint is "bool")
+            {
+                builder.OpenComponent<CascadingValue<bool>>(seq++);
+            }
+            else if (constraint is "guid")
+            {
+                builder.OpenComponent<CascadingValue<Guid>>(seq++);
+            }
+            else if (constraint is "long")
+            {
+                builder.OpenComponent<CascadingValue<long>>(seq++);
+            }
+            else if (constraint is "float")
+            {
+                builder.OpenComponent<CascadingValue<float>>(seq++);
+            }
+            else if (constraint is "double")
+            {
+                builder.OpenComponent<CascadingValue<double>>(seq++);
+            }
+            else if (constraint is "decimal")
+            {
+                builder.OpenComponent<CascadingValue<decimal>>(seq++);
+            }
+            else if (constraint is "datetime")
+            {
+                builder.OpenComponent<CascadingValue<DateTime>>(seq++);
+            }
+        }
         builder.AddAttribute(seq++, "Name", name);
         builder.AddAttribute(seq++, "Value", value);
-        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq++, child)));
-        builder.CloseComponent();
         return seq;
     }
 
@@ -99,7 +189,8 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
 
         _currentFragment = _context.Fragment;
         _parameters = _context.Parameters;
-        
+        _constraints = _context.Constraints;
+
         OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Path, _parameters, _context.Fragment));
 
         StateHasChanged();

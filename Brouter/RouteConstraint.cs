@@ -6,7 +6,9 @@ internal abstract class RouteConstraint
 {
     private static readonly IDictionary<string, RouteConstraint> _CachedConstraints = new Dictionary<string, RouteConstraint>();
 
-    public abstract bool Match(string pathSegment, out object convertedValue);
+    public string Constraint { get; private set; }
+
+    public abstract bool TryMatch(string pathSegment, out object convertedValue);
 
     public static RouteConstraint Parse(string path, string segment, string constraint)
     {
@@ -21,6 +23,7 @@ internal abstract class RouteConstraint
         }
 
         var newInstance = CreateRouteConstraint(constraint);
+        newInstance.Constraint = constraint;
         if (newInstance != null)
         {
             _CachedConstraints[constraint] = newInstance;
