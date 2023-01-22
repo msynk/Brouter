@@ -1,5 +1,4 @@
 @inherits LayoutComponentBase
-@using Brouter.Demo.Pages
 
 <div class="page">
     <div class="sidebar">
@@ -12,47 +11,47 @@
         </div>
 
         <div class="content px-4">
-            <MsynkBrouter>
-                <Route Path="/">
-                    <Home CountValue="@countValue"></Home>
+            <SBrouter>
+                <Route Template="/">
+                    <HomePage CountValue="@countValue"></HomePage>
                 </Route>
-                <Route Path="/counter">
-                    <Counter @bind-CurrentCount="countValue" ChangeCount="@ChangeCountValue"></Counter>
+                <Route Template="/counter">
+                    <CounterPage @bind-CurrentCount="countValue" ChangeCount="@ChangeCountValue" />
                 </Route>
-                <Route Path="/counter/{init:int}">
-                    <Counter @bind-CurrentCount="countValue" ChangeCount="@ChangeCountValue"></Counter>
+                <Route Template="/counter/{init:int}">
+                    <CounterPage @bind-CurrentCount="countValue" ChangeCount="@ChangeCountValue" />
                 </Route>
-                <Route Path="/counter/multi/{id:int:long}/{age:long:decimal:double}/{name}">
-                    <Counter />
+                <Route Template="/counter/multi/{id:int:long}/{age:long:decimal:double}/{name}">
+                    <CounterPage />
                 </Route>
-                <Route Path="/fetchdata">
-                    <FetchData />
+                <Route Template="/fetchdata">
+                    <FetchDataPage />
                 </Route>
-                <Route Path="/*/test">
+                <Route Template="/*/test">
                     <p>Test page</p>
                 </Route>
-                <Route Path="/nested-route/{id:int}/*">
-                    <MsynkBrouter>
-                        <Route Path="/nested-route/{id:int}">
-                            <FetchData Value="1" />
+                <Route Template="/nested-route/{id:int}/*">
+                    <SBrouter>
+                        <Route Template="/nested-route/{id:int}">
+                            <FetchDataPage Value="1" />
                         </Route>
-                        <Route Path="/nested-route/{id:int}/hello">
-                            <FetchData Value="2" />
+                        <Route Template="/nested-route/{id:int}/hello">
+                            <FetchDataPage Value="2" />
                         </Route>
-                        <Route Path="/nested-route/{id:int}/world">
-                            <FetchData Value="3" />
+                        <Route Template="/nested-route/{id:int}/world">
+                            <FetchDataPage Value="3" />
                         </Route>
                         <Route>
                             <h1 class="text-danger">Error</h1>
                             <p>Nested: Sorry, there's nothing at this address.</p>
                         </Route>
-                    </MsynkBrouter>
+                    </SBrouter>
                 </Route>
                 <Route>
                     <h1 class="text-danger">Error</h1>
                     <p>Sorry, there's nothing at this address.</p>
                 </Route>
-            </MsynkBrouter>
+            </SBrouter>
         </div>
     </div>
 </div>

@@ -2,33 +2,32 @@ namespace Brouter;
 
 internal class RouteEntry
 {
-    public RoutePath RoutePath { get; }
-
+    public RouteTemplate RouteTemplate { get; }
     public RenderFragment Fragment { get; }
 
-    public RouteEntry(RoutePath routePath, RenderFragment fragment)
+    public RouteEntry(RouteTemplate routeTemplate, RenderFragment fragment)
     {
-        RoutePath = routePath;
+        RouteTemplate = routeTemplate;
         Fragment = fragment;
     }
 
     internal void Match(RouteContext context)
     {
         // Empty path match all routes
-        if (string.IsNullOrEmpty(RoutePath.Path))
+        if (string.IsNullOrEmpty(RouteTemplate.Template))
         {
             context.Parameters = new Dictionary<string, object>();
             context.Fragment = Fragment;
-            context.Path = RoutePath.Path;
+            context.Template = RouteTemplate.Template;
             return;
         }
 
-        if (RoutePath.Segments.Length != context.Segments.Length)
+        if (RouteTemplate.TemplateSegments.Length != context.Segments.Length)
         {
-            if (RoutePath.Segments.Length == 0) return;
+            if (RouteTemplate.TemplateSegments.Length == 0) return;
 
-            bool lastSegmentStar = RoutePath.Segments[^1].Value == "*" && RoutePath.Segments.Length - context.Segments.Length == 1;
-            bool lastSegmentDoubleStar = RoutePath.Segments[^1].Value == "**" && context.Segments.Length >= RoutePath.Segments.Length - 1;
+            bool lastSegmentStar = RouteTemplate.TemplateSegments[^1].Value == "*" && RouteTemplate.TemplateSegments.Length - context.Segments.Length == 1;
+            bool lastSegmentDoubleStar = RouteTemplate.TemplateSegments[^1].Value == "**" && context.Segments.Length >= RouteTemplate.TemplateSegments.Length - 1;
 
             if (lastSegmentStar is false && lastSegmentDoubleStar is false) return;
         }
@@ -37,30 +36,30 @@ internal class RouteEntry
         IDictionary<string, object> parameters = null;
         IDictionary<string, string[]> constraints = null;
 
-        for (int i = 0; i < RoutePath.Segments.Length; i++)
+        for (int i = 0; i < RouteTemplate.TemplateSegments.Length; i++)
         {
-            var pathSegment = RoutePath.Segments[i];
+            var templateSegment = RouteTemplate.TemplateSegments[i];
             var segment = i < context.Segments.Length ? context.Segments[i] : string.Empty;
 
-            if (pathSegment.TryMatch(segment, out var matchedParameterValue) is false)
+            if (templateSegment.TryMatch(segment, out var matchedParameterValue) is false)
             {
                 context.Fragment = null;
                 return;
             }
 
             context.Fragment = Fragment;
-            context.Path = RoutePath.Path;
+            context.Template = RouteTemplate.Template;
 
-            if (pathSegment.IsParameter)
+            if (templateSegment.IsParameter)
             {
                 InitParameters();
-                parameters[pathSegment.Value] = matchedParameterValue;
-                constraints[pathSegment.Value] = pathSegment.Constraints.Select(rc => rc.Constraint).ToArray();
+                parameters[templateSegment.Value] = matchedParameterValue;
+                constraints[templateSegment.Value] = templateSegment.Constraints.Select(rc => rc.Constraint).ToArray();
             }
         }
 
         context.Fragment = Fragment;
-        context.Path = RoutePath.Path;
+        context.Template = RouteTemplate.Template;
         context.Parameters = parameters;
         context.Constraints = constraints;
 

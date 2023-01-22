@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Components.Routing;
 
 namespace Brouter;
 
-public partial class MsynkBrouter : ComponentBase, IDisposable
+public partial class SBrouter : ComponentBase, IDisposable
 {
     private static readonly char[] _QueryOrHashStartChar = { '?', '#' };
 
@@ -25,6 +25,7 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
     public void RegisterRoute(string id, RenderFragment fragment, string path)
     {
         var entry = _routeTable.Add(id, path, fragment);
+
         if (_firstMatched is false)
         {
             _firstMatched = MatchRoute(id, entry);
@@ -39,8 +40,10 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
 
     protected override void OnInitialized()
     {
-        _location = _navManager.Uri;
         _navManager.LocationChanged += LocationChanged;
+
+        _location = _navManager.Uri;
+
         UpdateRouteContext();
 
         base.OnInitialized();
@@ -73,7 +76,9 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
     {
         var path = _navManager.ToBaseRelativePath(_navManager.Uri);
         var firstIndex = path.IndexOfAny(_QueryOrHashStartChar);
+
         path = firstIndex < 0 ? path : path.Substring(0, firstIndex);
+
         _context = new RouteContext($"/{path}");
     }
 
@@ -85,7 +90,7 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
         }
         else
         {
-            _routeTable.Match(_context, id, entry);
+            RouteTable.Match(_context, id, entry);
         }
 
         if (_context.Fragment is null) return false;
@@ -94,7 +99,7 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
         _constraints = _context.Constraints;
         _currentFragment = _context.Fragment;
 
-        OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Path, _parameters, _context.Fragment));
+        OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Template, _parameters, _context.Fragment));
 
         StateHasChanged();
 
@@ -103,6 +108,15 @@ public partial class MsynkBrouter : ComponentBase, IDisposable
 
     public void Dispose()
     {
-        _navManager.LocationChanged -= LocationChanged;
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _navManager.LocationChanged -= LocationChanged;
+        }
     }
 }

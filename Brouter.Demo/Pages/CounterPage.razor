@@ -2,7 +2,7 @@
 
 <p>Current count: @CurrentCount</p>
 
-<button class="btn btn-primary" @onclick="() => ChangeCount(CurrentCount + 1)">Click me</button>
+<button class="btn btn-primary" @onclick="() => ChangeCount?.Invoke(CurrentCount + 1)">Click me</button>
 
 <br />
 

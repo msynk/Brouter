@@ -1,18 +1,17 @@
 using Microsoft.AspNetCore.Components.Rendering;
-using System.Data;
 
 namespace Brouter;
 
 internal class BrouterRenderer
 {
-    private readonly MsynkBrouter _brouter;
+    private readonly SBrouter _brouter;
     private readonly RenderTreeBuilder _builder;
     private readonly RenderFragment _currentFragment;
     private readonly IDictionary<string, object> _parameters;
     private readonly IDictionary<string, string[]> _constraints;
 
     public BrouterRenderer(
-                    MsynkBrouter brouter,
+                    SBrouter brouter,
                     RenderTreeBuilder builder,
                     IDictionary<string, object> parameters,
                     IDictionary<string, string[]> constraints,
@@ -34,7 +33,7 @@ internal class BrouterRenderer
     private int CreateBrouterCascadingValue()
     {
         var seq = 0;
-        _builder.OpenComponent<CascadingValue<MsynkBrouter>>(seq++);
+        _builder.OpenComponent<CascadingValue<SBrouter>>(seq++);
         _builder.AddAttribute(seq++, "Name", "Brouter");
         _builder.AddAttribute(seq++, "Value", _brouter);
         _builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq, _brouter.ChildContent)));

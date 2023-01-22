@@ -4,21 +4,18 @@ internal class RouteTable
 {
     private readonly Dictionary<string, RouteEntry> routes = new();
 
-    public RouteEntry Add(string id, string path, RenderFragment fragment)
+    public RouteEntry Add(string id, string template, RenderFragment fragment)
     {
-        if (routes.ContainsKey(id)) return routes[id];
+        if (routes.TryGetValue(id, out RouteEntry value)) return value;
 
-        var routePath = PathParser.ParsePath(path);
-        var entry = new RouteEntry(routePath, fragment);
+        var routeTemplate = TemplateParser.ParseTemplate(template);
+        var entry = new RouteEntry(routeTemplate, fragment);
         routes[id] = entry;
 
         return entry;
     }
 
-    public void Remove(string id)
-    {
-        routes.Remove(id);
-    }
+    public void Remove(string id) => routes.Remove(id);
 
     internal void FindMatch(RouteContext routeContext)
     {
@@ -29,13 +26,12 @@ internal class RouteTable
             if (routeContext.Fragment is not null)
             {
                 routeContext.Id = key;
-                
                 return;
             }
         }
     }
 
-    internal void Match(RouteContext routeContext, string id, RouteEntry routeEntry)
+    internal static void Match(RouteContext routeContext, string id, RouteEntry routeEntry)
     {
         routeEntry.Match(routeContext);
 

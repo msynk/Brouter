@@ -6,23 +6,21 @@ internal abstract class RouteConstraint
 {
     private static readonly IDictionary<string, RouteConstraint> _CachedConstraints = new Dictionary<string, RouteConstraint>();
 
+
     public string Constraint { get; private set; }
 
     public abstract bool TryMatch(string pathSegment, out object convertedValue);
 
-    public static RouteConstraint Parse(string path, string segment, string constraint)
+
+    public static RouteConstraint Parse(string template, string segment, string constraint)
     {
         if (string.IsNullOrEmpty(constraint))
-        {
-            throw new ArgumentException($"Malformed segment '{segment}' in route '{path}' contains an empty constraint.");
-        }
+            throw new ArgumentException($"Malformed segment '{segment}' in route '{template}' contains an empty constraint.");
 
-        if (_CachedConstraints.TryGetValue(constraint, out var cachedInstance))
-        {
-            return cachedInstance;
-        }
+        if (_CachedConstraints.TryGetValue(constraint, out var cachedInstance)) return cachedInstance;
 
         var newInstance = CreateRouteConstraint(constraint);
+
         if (newInstance is not null)
         {
             _CachedConstraints[constraint] = newInstance;
@@ -30,7 +28,7 @@ internal abstract class RouteConstraint
             return newInstance;
         }
 
-        throw new ArgumentException($"Unsupported constraint '{constraint}' in route '{path}'.");
+        throw new ArgumentException($"Unsupported constraint '{constraint}' in route '{template}'.");
     }
 
     private static RouteConstraint CreateRouteConstraint(string constraint) => constraint switch

@@ -8,16 +8,16 @@ internal class TypeRouteConstraint<T> : RouteConstraint
 {
     private readonly TryParseDelegate _parser;
 
-    public delegate bool TryParseDelegate(string str, out T result);
+    public delegate bool TryParseDelegate(string value, out T result);
 
     public TypeRouteConstraint(TryParseDelegate parser)
     {
         _parser = parser;
     }
 
-    public override bool TryMatch(string pathSegment, out object convertedValue)
+    public override bool TryMatch(string segment, out object convertedValue)
     {
-        if (_parser(pathSegment, out var result))
+        if (_parser(segment, out var result))
         {
             convertedValue = result;
             return true;

@@ -5,9 +5,9 @@ internal class RouteContext
     private static readonly char[] _Separator = { '/' };
 
     public string Id { get; set; }
-    public string Path { get; set; }
     public string[] Segments { get; }
     public bool IsPrefix { get; set; }
+    public string Template { get; set; }
     public RenderFragment Fragment { get; set; }
     public IDictionary<string, object> Parameters { get; set; }
     public IDictionary<string, string[]> Constraints { get; set; }
