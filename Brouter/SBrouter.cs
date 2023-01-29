@@ -11,6 +11,7 @@ public partial class SBrouter : ComponentBase, IDisposable
     private RouteContext _context;
     private string _location = string.Empty;
     private RenderFragment _currentFragment;
+    private Type _currentComponent;
     private IDictionary<string, object> _parameters;
     private IDictionary<string, string[]> _constraints;
     private readonly RouteTable _routeTable = new();
@@ -22,20 +23,27 @@ public partial class SBrouter : ComponentBase, IDisposable
     [Parameter] public EventHandler<RouteMatchedEventArgs> OnMatch { get; set; }
 
 
-    public void RegisterRoute(string id, RenderFragment fragment, string path)
+    internal void RegisterRoute(string id, string template, RenderFragment fragment, Type component)
     {
-        var entry = _routeTable.Add(id, path, fragment);
+        var entry = _routeTable.Add(id, template, fragment, component);
 
-        if (_firstMatched is false)
-        {
-            _firstMatched = MatchRoute(id, entry);
-        }
+        if (_firstMatched) return;
+
+        //_firstMatched = MatchRoute(id, entry);
     }
 
-    public void UnregisterRoute(string id)
+    internal void UnregisterRoute(string id) => _routeTable.Remove(id);
+
+    internal void RegisterNullRoute(string id, string template, RenderFragment fragment, Type component)
     {
-        _routeTable.Remove(id);
+        var entry = _routeTable.AddNull(id, template, fragment, component);
+
+        if (_firstMatched) return;
+
+        //_firstMatched = MatchRoute(id, entry);
     }
+
+    internal void UnregisterNullRoute(string id) => _routeTable.RemoveNull(id);
 
 
     protected override void OnInitialized()
@@ -44,7 +52,7 @@ public partial class SBrouter : ComponentBase, IDisposable
 
         _location = _navManager.Uri;
 
-        UpdateRouteContext();
+        CreateRouteContext();
 
         base.OnInitialized();
     }
@@ -54,6 +62,8 @@ public partial class SBrouter : ComponentBase, IDisposable
         if (firstRender)
         {
             await _navInterception.EnableNavigationInterceptionAsync();
+
+            MatchRoute();
         }
     }
 
@@ -61,18 +71,18 @@ public partial class SBrouter : ComponentBase, IDisposable
     {
         base.BuildRenderTree(builder);
 
-        new BrouterRenderer(this, builder, _parameters, _constraints, _currentFragment).BuildRenderTree();
+        new BrouterRenderer(this, builder, _parameters, _constraints, _currentFragment, _currentComponent).BuildRenderTree();
     }
 
 
     private void LocationChanged(object sender, LocationChangedEventArgs e)
     {
         _location = e.Location;
-        UpdateRouteContext();
+        CreateRouteContext();
         MatchRoute();
     }
 
-    private void UpdateRouteContext()
+    private void CreateRouteContext()
     {
         var path = _navManager.ToBaseRelativePath(_navManager.Uri);
         var firstIndex = path.IndexOfAny(_QueryOrHashStartChar);
@@ -93,13 +103,14 @@ public partial class SBrouter : ComponentBase, IDisposable
             RouteTable.Match(_context, id, entry);
         }
 
-        if (_context.Fragment is null) return false;
+        if (_context.Fragment is null && _context.Component is null) return false;
 
         _parameters = _context.Parameters;
         _constraints = _context.Constraints;
         _currentFragment = _context.Fragment;
+        _currentComponent = _context.Component;
 
-        OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Template, _parameters, _context.Fragment));
+        OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Template, _parameters, _context.Fragment, _context.Component));
 
         StateHasChanged();
 
@@ -114,9 +125,8 @@ public partial class SBrouter : ComponentBase, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
-        {
-            _navManager.LocationChanged -= LocationChanged;
-        }
+        if (disposing is false) return;
+
+        _navManager.LocationChanged -= LocationChanged;
     }
 }

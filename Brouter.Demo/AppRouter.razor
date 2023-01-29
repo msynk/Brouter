@@ -1,0 +1,55 @@
+﻿@code {
+    private int currentCount { get; set; } = 0;
+
+    void ChangeCountValue(int value)
+    {
+        currentCount = value;
+        StateHasChanged();
+    }
+}
+
+<SBrouter>
+    <Route Template="/">
+        <Content><HomePage CountValue="@currentCount"></HomePage></Content>
+    </Route>
+
+    <Route Template="/counter">
+        <Content><CounterPage @bind-CurrentCount="currentCount" ChangeCount="@ChangeCountValue" /></Content>
+    </Route>
+
+    <Route Template="/counter/{init:int}">
+        <Content><CounterPage @bind-CurrentCount="currentCount" ChangeCount="@ChangeCountValue" /></Content>
+    </Route>
+
+    <Route Template="/counter/multi/{id:int:long}/{age:long:decimal:double}/{name}">
+        <Content><CounterPage @bind-CurrentCount="currentCount" ChangeCount="@ChangeCountValue" /></Content>
+    </Route>
+
+    <Route Template="/fetchdata" Component="typeof(FetchDataPage)" />
+
+    <Route Template="/*/test">
+        <Content><p>Test page</p></Content>
+    </Route>
+
+    <Route Template="/nested-route">
+        <Route Template="/{id:int}" Component="@typeof(FetchDataPage)" />
+        <Route Template="/{id:int}/hello">
+            <Content><FetchDataPage Value="2" /></Content>
+        </Route>
+        <Route Template="/{id:int}/world">
+            <Content><FetchDataPage Value="3" /></Content>
+        </Route>
+        @*<Route>
+        <Content>
+        <h1 class="text-danger">Error</h1>
+        <p>Nested: Sorry, there's nothing at this address.</p>
+        </Content>
+        </Route>*@
+    </Route>
+    <Route>
+        <Content>
+            <h1 class="text-danger">Error</h1>
+            <p>Sorry, there's nothing at this address.</p>
+        </Content>
+    </Route>
+</SBrouter>

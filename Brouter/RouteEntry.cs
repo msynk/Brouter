@@ -4,11 +4,13 @@ internal class RouteEntry
 {
     public RouteTemplate RouteTemplate { get; }
     public RenderFragment Fragment { get; }
+    public Type Component { get; }
 
-    public RouteEntry(RouteTemplate routeTemplate, RenderFragment fragment)
+    public RouteEntry(RouteTemplate routeTemplate, RenderFragment fragment, Type component)
     {
         RouteTemplate = routeTemplate;
         Fragment = fragment;
+        Component = component;
     }
 
     internal void Match(RouteContext context)
@@ -17,8 +19,10 @@ internal class RouteEntry
         if (string.IsNullOrEmpty(RouteTemplate.Template))
         {
             context.Parameters = new Dictionary<string, object>();
-            context.Fragment = Fragment;
             context.Template = RouteTemplate.Template;
+            context.Fragment = Fragment;
+            context.Component = Component;
+
             return;
         }
 
@@ -44,11 +48,14 @@ internal class RouteEntry
             if (templateSegment.TryMatch(segment, out var matchedParameterValue) is false)
             {
                 context.Fragment = null;
+                context.Component = null;
+
                 return;
             }
 
-            context.Fragment = Fragment;
-            context.Template = RouteTemplate.Template;
+            //context.Template = RouteTemplate.Template;
+            //context.Fragment = Fragment;
+            //context.Component = Component;
 
             if (templateSegment.IsParameter)
             {
@@ -58,8 +65,9 @@ internal class RouteEntry
             }
         }
 
-        context.Fragment = Fragment;
         context.Template = RouteTemplate.Template;
+        context.Fragment = Fragment;
+        context.Component = Component;
         context.Parameters = parameters;
         context.Constraints = constraints;
 

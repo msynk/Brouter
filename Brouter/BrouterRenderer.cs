@@ -7,21 +7,23 @@ internal class BrouterRenderer
     private readonly SBrouter _brouter;
     private readonly RenderTreeBuilder _builder;
     private readonly RenderFragment _currentFragment;
+    private readonly Type _currentComponent;
     private readonly IDictionary<string, object> _parameters;
     private readonly IDictionary<string, string[]> _constraints;
 
-    public BrouterRenderer(
-                    SBrouter brouter,
-                    RenderTreeBuilder builder,
-                    IDictionary<string, object> parameters,
-                    IDictionary<string, string[]> constraints,
-                    RenderFragment currentFragment)
+    public BrouterRenderer(SBrouter brouter,
+                           RenderTreeBuilder builder,
+                           IDictionary<string, object> parameters,
+                           IDictionary<string, string[]> constraints,
+                           RenderFragment currentFragment,
+                           Type currentComponent)
     {
         _brouter = brouter;
         _builder = builder;
         _parameters = parameters;
         _constraints = constraints;
         _currentFragment = currentFragment;
+        _currentComponent = currentComponent;
     }
 
     public void BuildRenderTree()
@@ -77,7 +79,18 @@ internal class BrouterRenderer
         builder.OpenComponent<CascadingValue<IDictionary<string, object>>>(seq++);
         builder.AddAttribute(seq++, "Name", "RouteParameters");
         builder.AddAttribute(seq++, "Value", _parameters);
-        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq, _currentFragment)));
+        if (_currentFragment is not null)
+        {
+            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq, _currentFragment)));
+        }
+        else if (_currentComponent is not null)
+        {
+            builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 =>
+            {
+                builder2.OpenComponent(seq++, _currentComponent);
+                builder2.CloseComponent();
+            }));
+        }
         builder.CloseComponent();
     }
 

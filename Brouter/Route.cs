@@ -1,24 +1,51 @@
-﻿namespace Brouter;
+﻿using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Routing;
+using System.IO;
+
+namespace Brouter;
 
 public partial class Route : ComponentBase, IDisposable
 {
     private readonly string id = Guid.NewGuid().ToString();
 
-    [Parameter] public string Template { get; set; } = "";
+    [Parameter] public string Template { get; set; }
+    [Parameter] public Type Component { get; set; }
+    [Parameter] public RenderFragment Content { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
 
-    [CascadingParameter(Name = "Brouter")] protected SBrouter Router { get; set; }
+    [CascadingParameter(Name = "Brouter")] protected SBrouter Brouter { get; set; }
+    [CascadingParameter(Name = "NestedTemplate")] protected string NestedTemplate { get; set; }
+
+
+    private string InternalTemplate => string.IsNullOrWhiteSpace(NestedTemplate) ? Template : $"{NestedTemplate}/{Template}".Replace("//", "/");
 
     protected override void OnInitialized()
     {
         base.OnInitialized();
 
-        if (Router == null)
-        {
-            throw new InvalidOperationException("A Route markup must be nested in a Switch markup.");
-        }
+        if (Brouter == null)
+            throw new InvalidOperationException("A Route must be nested in a Brouter.");
 
-        Router.RegisterRoute(id, ChildContent, Template);
+        if (Template is null)
+        {
+            Brouter.RegisterNullRoute(id, InternalTemplate, Content, Component);
+        }
+        else
+        {
+            Brouter.RegisterRoute(id, InternalTemplate, Content, Component);
+        }
+    }
+
+    protected override void BuildRenderTree(RenderTreeBuilder builder)
+    {
+        base.BuildRenderTree(builder);
+
+        var seq = 0;
+        builder.OpenComponent<CascadingValue<string>>(seq++);
+        builder.AddAttribute(seq++, "Name", "NestedTemplate");
+        builder.AddAttribute(seq++, "Value", InternalTemplate);
+        builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq, ChildContent)));
+        builder.CloseComponent();
     }
 
     public void Dispose()
@@ -29,9 +56,8 @@ public partial class Route : ComponentBase, IDisposable
 
     protected virtual void Dispose(bool disposing)
     {
-        if (disposing)
-        {
-            Router?.UnregisterRoute(id);
-        }
+        if (disposing is false) return;
+
+        Brouter?.UnregisterRoute(id);
     }
 }
