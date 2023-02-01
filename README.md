@@ -108,3 +108,17 @@ protected override void OnParametersSet()
 }
 
 ```
+
+you can also Guard routes using a `Func<bool>`:
+
+```razor
+<Route Template="/guarded" Guard="() => DateTime.Now.Second % 2 == 0" RedirectTo="/403">
+    <Content>This is a <strong>Guarded</strong> route</Content>
+</Route>
+<Route Template="/403">
+    <Content>
+        <h1 class="text-danger">403 oops!</h1>
+        <p>Sorry, you can't go there.</p>
+    </Content>
+</Route>
+```
