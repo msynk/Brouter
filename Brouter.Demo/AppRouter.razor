@@ -9,7 +9,9 @@
 }
 
 <SBrouter>
-    <Route Template="/">
+    <Route Template="/" RedirectTo="/home" />
+
+    <Route Template="/home">
         <Content><HomePage CountValue="@currentCount"></HomePage></Content>
     </Route>
 
