@@ -5,6 +5,8 @@ internal class RouteContext
     private static readonly char[] _Separator = { '/' };
 
     public string Path { get; }
+    public string RedirectTo { get; set; }
+
 
     public string Id { get; set; }
     public string[] Segments { get; }

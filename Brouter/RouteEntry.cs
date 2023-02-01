@@ -17,23 +17,29 @@ internal class RouteEntry
         Route = route;
     }
 
-    internal bool Match(RouteContext context)
+    internal bool Match(RouteContext routeContext)
     {
         // Empty path match all routes
         if (string.IsNullOrEmpty(RouteTemplate.Template))
         {
-            context.Route = Route;
-            context.Template = RouteTemplate.Template;
-            context.Parameters = new Dictionary<string, object>();
+            if (CheckGuard(Route, routeContext) is false) return false;
+
+            routeContext.Route = Route;
+            routeContext.Template = RouteTemplate.Template;
+            routeContext.Parameters = new Dictionary<string, object>();
+            if (Route.Guard is null)
+            {
+                routeContext.RedirectTo = Route.RedirectTo;
+            }
             return true;
         }
 
-        if (RouteTemplate.TemplateSegments.Length != context.Segments.Length)
+        if (RouteTemplate.TemplateSegments.Length != routeContext.Segments.Length)
         {
             if (RouteTemplate.TemplateSegments.Length == 0) return false;
 
-            bool lastSegmentStar = RouteTemplate.TemplateSegments[^1].Value == "*" && RouteTemplate.TemplateSegments.Length - context.Segments.Length == 1;
-            bool lastSegmentDoubleStar = RouteTemplate.TemplateSegments[^1].Value == "**" && context.Segments.Length >= RouteTemplate.TemplateSegments.Length - 1;
+            bool lastSegmentStar = RouteTemplate.TemplateSegments[^1].Value == "*" && RouteTemplate.TemplateSegments.Length - routeContext.Segments.Length == 1;
+            bool lastSegmentDoubleStar = RouteTemplate.TemplateSegments[^1].Value == "**" && routeContext.Segments.Length >= RouteTemplate.TemplateSegments.Length - 1;
 
             if (lastSegmentStar is false && lastSegmentDoubleStar is false) return false;
         }
@@ -45,11 +51,11 @@ internal class RouteEntry
         for (int i = 0; i < RouteTemplate.TemplateSegments.Length; i++)
         {
             var templateSegment = RouteTemplate.TemplateSegments[i];
-            var segment = i < context.Segments.Length ? context.Segments[i] : string.Empty;
+            var segment = i < routeContext.Segments.Length ? routeContext.Segments[i] : string.Empty;
 
             if (templateSegment.TryMatch(segment, out var matchedParameterValue) is false)
             {
-                context.Route = null;
+                routeContext.Route = null;
                 return false;
             }
 
@@ -64,10 +70,17 @@ internal class RouteEntry
             }
         }
 
-        context.Route = Route;
-        context.Parameters = parameters;
-        context.Constraints = constraints;
-        context.Template = RouteTemplate.Template;
+        if (CheckGuard(Route, routeContext) is false) return false;
+
+        routeContext.Route = Route;
+        routeContext.Parameters = parameters;
+        routeContext.Constraints = constraints;
+        routeContext.Template = RouteTemplate.Template;
+
+        if (Route.Guard is null)
+        {
+            routeContext.RedirectTo = Route.RedirectTo;
+        }
 
         return true;
 
@@ -79,5 +92,26 @@ internal class RouteEntry
                 constraints = new Dictionary<string, string[]>();
             }
         };
+    }
+
+    private bool CheckGuard(Route route, RouteContext routeContext)
+    {
+        var result = true;
+
+        if (route.Guard is not null)
+        {
+            result = route.Guard.Invoke();
+            if (result is false)
+            {
+                routeContext.RedirectTo = route.RedirectTo;
+            }
+        }
+
+        if (result && route.Parent is not null)
+        {
+            result = CheckGuard(route.Parent, routeContext);
+        }
+
+        return result;
     }
 }

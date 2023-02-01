@@ -36,7 +36,6 @@ internal class RouteTable
             }
         }
 
-        // TODO: find the best match based on nested routes
         foreach (var (key, routeEntry) in _nullRoutes.Reverse())
         {
             var template = routeEntry.Route.FullTemplate;
@@ -46,12 +45,6 @@ internal class RouteTable
                 routeContext.Route = routeEntry.Route;
                 return routeEntry;
             }
-
-            //if (routeEntry.Match(routeContext))
-            //{
-            //    routeContext.Id = key;
-            //    return routeEntry;
-            //}
         }
 
         return RouteEntry.Empty;

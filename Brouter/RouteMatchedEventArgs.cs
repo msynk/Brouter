@@ -1,7 +1,9 @@
 ﻿namespace Brouter;
 
-public readonly struct RouteMatchedEventArgs
+public class RouteMatchedEventArgs
 {
+    public bool ShouldNotRender { get; set; }
+
     public string Location { get; }
     public string Template { get; }
     public RenderFragment Content { get; }

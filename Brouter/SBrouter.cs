@@ -91,9 +91,9 @@ public partial class SBrouter : ComponentBase, IDisposable
     {
         var foundRouteEntry = _routeTable.FindMatch(_context);
 
-        if (string.IsNullOrEmpty(foundRouteEntry.Route.RedirectTo) is false)
+        if (string.IsNullOrEmpty(_context.RedirectTo) is false)
         {
-            _navManager.NavigateTo(foundRouteEntry.Route.RedirectTo);
+            _navManager.NavigateTo(_context.RedirectTo);
             return true;
         }
 
@@ -110,12 +110,16 @@ public partial class SBrouter : ComponentBase, IDisposable
     {
         if (_context.Route.Content is null && _context.Route.Component is null) return;
 
+        var args = new RouteMatchedEventArgs(_location, _context.Template, _parameters, _context.Route.Content, _context.Route.Component);
+        
+        OnMatch?.Invoke(this, args);
+
+        if (args.ShouldNotRender) return;
+
         _parameters = _context.Parameters;
         _constraints = _context.Constraints;
         _currentFragment = _context.Route.Content;
         _currentComponent = _context.Route.Component;
-
-        OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Template, _parameters, _context.Route.Content, _context.Route.Component));
 
         StateHasChanged();
     }

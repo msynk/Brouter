@@ -10,10 +10,12 @@ public partial class Route : ComponentBase, IDisposable
     [Parameter] public string RedirectTo { get; set; }
     [Parameter] public Type Component { get; set; }
     [Parameter] public RenderFragment Content { get; set; }
-    [Parameter] public RenderFragment ChildContent { get; set; }
+    [Parameter] public Func<bool> Guard { get; set; }
 
     [CascadingParameter(Name = "Brouter")] protected SBrouter Brouter { get; set; }
     [CascadingParameter(Name = "ParentRoute")] internal Route Parent { get; set; }
+
+    [Parameter] public RenderFragment ChildContent { get; set; }
 
 
     internal string FullTemplate => (Parent is null || string.IsNullOrWhiteSpace(Parent.FullTemplate))
