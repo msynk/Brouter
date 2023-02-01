@@ -83,3 +83,28 @@ and for nested route:
     </Route>
 </SBrouter>
 ```
+
+To receive the route parameters you can use either:
+- the `RouteParameters` CascadingParameter to capture all route parameters
+- or a named CascadingParameter for each parameter as shown below.
+
+```csharp
+[CascadingParameter(Name = "RouteParameters")] IDictionary<string, object> Parameters { get; set; }
+
+[CascadingParameter(Name = "id")] long Id { get; set; }
+
+protected override void OnParametersSet()
+{
+    if (parameterHasSet) return;
+
+    parameterHasSet = true;
+
+    base.OnParametersSet();
+
+    if (Parameters is not null && Parameters.ContainsKey("id"))
+    {
+        var id = (int)Parameters["id"];
+    }
+}
+
+```

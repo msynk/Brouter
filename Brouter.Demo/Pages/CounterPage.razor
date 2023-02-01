@@ -22,28 +22,26 @@
     [CascadingParameter(Name = "RouteParameters")] IDictionary<string, object> Parameters { get; set; }
 
     [CascadingParameter(Name = "init")] int Init { get; set; }
-    
+
     [CascadingParameter(Name = "id")] long Id { get; set; }
     [CascadingParameter(Name = "age")] double Age { get; set; }
-    [CascadingParameter(Name = "name")] object Name{ get; set; }
+    [CascadingParameter(Name = "name")] object Name { get; set; }
 
 
     private bool parameterHasSet = false;
 
-    protected override Task OnParametersSetAsync()
+    protected override void OnParametersSet()
     {
-        if (parameterHasSet) return Task.CompletedTask;
+        if (parameterHasSet) return;
 
         parameterHasSet = true;
 
-        base.OnParametersSetAsync();
+        base.OnParametersSet();
 
         if (Parameters is not null && Parameters.ContainsKey("init"))
         {
             CurrentCount = (int)Parameters["init"];
             ChangeCount(CurrentCount);
         }
-
-        return Task.CompletedTask;
     }
 }

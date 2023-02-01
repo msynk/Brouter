@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Components.Rendering;
-using Microsoft.AspNetCore.Components.Routing;
-using System.IO;
 
 namespace Brouter;
 
