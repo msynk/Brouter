@@ -10,9 +10,9 @@
 }
 else
 {
-    if (parameters?.ContainsKey("id") ?? false)
+    if (Parameters?.ContainsKey("id") ?? false)
     {
-        <p>Id: @parameters["id"], Value: @Value</p>
+        <p>Id: @Parameters["id"], Value: @Value</p>
     }
     <table class="table">
         <thead>
@@ -38,9 +38,11 @@ else
 }
 
 @code {
+    [Parameter] public string Value { get; set; } = "N/A";
+
+    [CascadingParameter(Name = "RouteParameters")] IDictionary<string, object> Parameters { get; set; }
+
     private WeatherForecast[] forecasts;
-    [CascadingParameter(Name = "RouteParameters")] IDictionary<string, object> parameters { get; set; }
-    [Parameter] public string Value { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

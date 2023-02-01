@@ -6,18 +6,21 @@ namespace Brouter;
 
 public partial class Route : ComponentBase, IDisposable
 {
-    private readonly string id = Guid.NewGuid().ToString();
+    internal readonly string Id = Guid.NewGuid().ToString();
 
     [Parameter] public string Template { get; set; }
+    [Parameter] public string RedirectTo { get; set; }
     [Parameter] public Type Component { get; set; }
     [Parameter] public RenderFragment Content { get; set; }
     [Parameter] public RenderFragment ChildContent { get; set; }
 
     [CascadingParameter(Name = "Brouter")] protected SBrouter Brouter { get; set; }
-    [CascadingParameter(Name = "NestedTemplate")] protected string NestedTemplate { get; set; }
+    [CascadingParameter(Name = "ParentRoute")] internal Route Parent { get; set; }
 
 
-    private string InternalTemplate => string.IsNullOrWhiteSpace(NestedTemplate) ? Template : $"{NestedTemplate}/{Template}".Replace("//", "/");
+    internal string FullTemplate => (Parent is null || string.IsNullOrWhiteSpace(Parent.FullTemplate))
+                                        ? Template
+                                        : $"{Parent.FullTemplate}/{Template}".Replace("//", "/");
 
     protected override void OnInitialized()
     {
@@ -26,14 +29,7 @@ public partial class Route : ComponentBase, IDisposable
         if (Brouter == null)
             throw new InvalidOperationException("A Route must be nested in a Brouter.");
 
-        if (Template is null)
-        {
-            Brouter.RegisterNullRoute(id, InternalTemplate, Content, Component);
-        }
-        else
-        {
-            Brouter.RegisterRoute(id, InternalTemplate, Content, Component);
-        }
+        Brouter.RegisterRoute(this);
     }
 
     protected override void BuildRenderTree(RenderTreeBuilder builder)
@@ -41,9 +37,9 @@ public partial class Route : ComponentBase, IDisposable
         base.BuildRenderTree(builder);
 
         var seq = 0;
-        builder.OpenComponent<CascadingValue<string>>(seq++);
-        builder.AddAttribute(seq++, "Name", "NestedTemplate");
-        builder.AddAttribute(seq++, "Value", InternalTemplate);
+        builder.OpenComponent<CascadingValue<Route>>(seq++);
+        builder.AddAttribute(seq++, "Name", "ParentRoute");
+        builder.AddAttribute(seq++, "Value", this);
         builder.AddAttribute(seq++, "ChildContent", (RenderFragment)(builder2 => builder2.AddContent(seq, ChildContent)));
         builder.CloseComponent();
     }
@@ -58,6 +54,6 @@ public partial class Route : ComponentBase, IDisposable
     {
         if (disposing is false) return;
 
-        Brouter?.UnregisterRoute(id);
+        Brouter?.UnregisterRoute(Id);
     }
 }

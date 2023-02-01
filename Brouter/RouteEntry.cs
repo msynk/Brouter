@@ -2,38 +2,40 @@ namespace Brouter;
 
 internal class RouteEntry
 {
-    public RouteTemplate RouteTemplate { get; }
-    public RenderFragment Fragment { get; }
-    public Type Component { get; }
+    public readonly static RouteEntry Empty = new();
+    private RouteEntry() { }
 
-    public RouteEntry(RouteTemplate routeTemplate, RenderFragment fragment, Type component)
+
+    public RouteTemplate RouteTemplate { get; }
+
+    public Route Route { get; }
+
+
+    public RouteEntry(RouteTemplate routeTemplate, Route route)
     {
         RouteTemplate = routeTemplate;
-        Fragment = fragment;
-        Component = component;
+        Route = route;
     }
 
-    internal void Match(RouteContext context)
+    internal bool Match(RouteContext context)
     {
         // Empty path match all routes
         if (string.IsNullOrEmpty(RouteTemplate.Template))
         {
-            context.Parameters = new Dictionary<string, object>();
+            context.Route = Route;
             context.Template = RouteTemplate.Template;
-            context.Fragment = Fragment;
-            context.Component = Component;
-
-            return;
+            context.Parameters = new Dictionary<string, object>();
+            return true;
         }
 
         if (RouteTemplate.TemplateSegments.Length != context.Segments.Length)
         {
-            if (RouteTemplate.TemplateSegments.Length == 0) return;
+            if (RouteTemplate.TemplateSegments.Length == 0) return false;
 
             bool lastSegmentStar = RouteTemplate.TemplateSegments[^1].Value == "*" && RouteTemplate.TemplateSegments.Length - context.Segments.Length == 1;
             bool lastSegmentDoubleStar = RouteTemplate.TemplateSegments[^1].Value == "**" && context.Segments.Length >= RouteTemplate.TemplateSegments.Length - 1;
 
-            if (lastSegmentStar is false && lastSegmentDoubleStar is false) return;
+            if (lastSegmentStar is false && lastSegmentDoubleStar is false) return false;
         }
 
         // Parameters will be lazily initialized.
@@ -47,15 +49,12 @@ internal class RouteEntry
 
             if (templateSegment.TryMatch(segment, out var matchedParameterValue) is false)
             {
-                context.Fragment = null;
-                context.Component = null;
-
-                return;
+                context.Route = null;
+                return false;
             }
 
+            //context.Route = Route;
             //context.Template = RouteTemplate.Template;
-            //context.Fragment = Fragment;
-            //context.Component = Component;
 
             if (templateSegment.IsParameter)
             {
@@ -65,11 +64,12 @@ internal class RouteEntry
             }
         }
 
-        context.Template = RouteTemplate.Template;
-        context.Fragment = Fragment;
-        context.Component = Component;
+        context.Route = Route;
         context.Parameters = parameters;
         context.Constraints = constraints;
+        context.Template = RouteTemplate.Template;
+
+        return true;
 
         void InitParameters()
         {

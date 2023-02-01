@@ -39,16 +39,26 @@
         <Route Template="/{id:int}/world">
             <Content><FetchDataPage Value="3" /></Content>
         </Route>
-        @*<Route>
-        <Content>
-        <h1 class="text-danger">Error</h1>
-        <p>Nested: Sorry, there's nothing at this address.</p>
-        </Content>
-        </Route>*@
+        <Route>
+            <Content>
+                <h1 class="text-danger">404 - Nested</h1>
+                <p>Nested: Sorry, there's nothing at this address.</p>
+            </Content>
+        </Route>
+
+        <Route Template="/nested-2">
+            <Route Template="/{id:int}" Component="@typeof(FetchDataPage)" />
+            <Route>
+                <Content>
+                    <h1 class="text-danger">404 - Nested 2</h1>
+                    <p>Nested - Nested: Sorry, there's nothing at this address.</p>
+                </Content>
+            </Route>
+        </Route>
     </Route>
     <Route>
         <Content>
-            <h1 class="text-danger">Error</h1>
+            <h1 class="text-danger">404</h1>
             <p>Sorry, there's nothing at this address.</p>
         </Content>
     </Route>

@@ -23,27 +23,16 @@ public partial class SBrouter : ComponentBase, IDisposable
     [Parameter] public EventHandler<RouteMatchedEventArgs> OnMatch { get; set; }
 
 
-    internal void RegisterRoute(string id, string template, RenderFragment fragment, Type component)
+    internal void RegisterRoute(Route route)
     {
-        var entry = _routeTable.Add(id, template, fragment, component);
+        var entry = _routeTable.Add(route);
 
         if (_firstMatched) return;
 
-        //_firstMatched = MatchRoute(id, entry);
+        //_firstMatched = Match(id, entry);
     }
 
     internal void UnregisterRoute(string id) => _routeTable.Remove(id);
-
-    internal void RegisterNullRoute(string id, string template, RenderFragment fragment, Type component)
-    {
-        var entry = _routeTable.AddNull(id, template, fragment, component);
-
-        if (_firstMatched) return;
-
-        //_firstMatched = MatchRoute(id, entry);
-    }
-
-    internal void UnregisterNullRoute(string id) => _routeTable.RemoveNull(id);
 
 
     protected override void OnInitialized()
@@ -59,12 +48,14 @@ public partial class SBrouter : ComponentBase, IDisposable
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await _navInterception.EnableNavigationInterceptionAsync();
+        await base.OnAfterRenderAsync(firstRender);
 
-            MatchRoute();
-        }
+        if (firstRender is false) return;
+        await _navInterception.EnableNavigationInterceptionAsync();
+
+        if (FindMatch() is false) return;
+
+        UpdateView();
     }
 
     protected override void BuildRenderTree(RenderTreeBuilder builder)
@@ -78,8 +69,12 @@ public partial class SBrouter : ComponentBase, IDisposable
     private void LocationChanged(object sender, LocationChangedEventArgs e)
     {
         _location = e.Location;
+
         CreateRouteContext();
-        MatchRoute();
+
+        if (FindMatch() is false) return;
+
+        UpdateView();
     }
 
     private void CreateRouteContext()
@@ -92,29 +87,37 @@ public partial class SBrouter : ComponentBase, IDisposable
         _context = new RouteContext($"/{path}");
     }
 
-    private bool MatchRoute(string id = null, RouteEntry entry = null)
+    private bool FindMatch()
     {
-        if (id is null || entry is null)
+        var foundRouteEntry = _routeTable.FindMatch(_context);
+
+        if (string.IsNullOrEmpty(foundRouteEntry.Route.RedirectTo) is false)
         {
-            _routeTable.FindMatch(_context);
-        }
-        else
-        {
-            RouteTable.Match(_context, id, entry);
+            _navManager.NavigateTo(foundRouteEntry.Route.RedirectTo);
+            return true;
         }
 
-        if (_context.Fragment is null && _context.Component is null) return false;
+        return foundRouteEntry != RouteEntry.Empty;
+    }
+
+    private bool Match(string id, RouteEntry routeEntry)
+    {
+
+        return RouteTable.Match(_context, id, routeEntry);
+    }
+
+    private void UpdateView()
+    {
+        if (_context.Route.Content is null && _context.Route.Component is null) return;
 
         _parameters = _context.Parameters;
         _constraints = _context.Constraints;
-        _currentFragment = _context.Fragment;
-        _currentComponent = _context.Component;
+        _currentFragment = _context.Route.Content;
+        _currentComponent = _context.Route.Component;
 
-        OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Template, _parameters, _context.Fragment, _context.Component));
+        OnMatch?.Invoke(this, new RouteMatchedEventArgs(_location, _context.Template, _parameters, _context.Route.Content, _context.Route.Component));
 
         StateHasChanged();
-
-        return true;
     }
 
     public void Dispose()

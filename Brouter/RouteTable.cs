@@ -5,65 +5,65 @@ internal class RouteTable
     private readonly Dictionary<string, RouteEntry> _routes = new();
     private readonly Dictionary<string, RouteEntry> _nullRoutes = new();
 
-    public RouteEntry Add(string id, string template, RenderFragment fragment, Type component)
+    public RouteEntry Add(Route route)
     {
-        if (_routes.TryGetValue(id, out RouteEntry value)) return value;
+        var routes = route.Template is null ? _nullRoutes : _routes;
 
-        var routeTemplate = TemplateParser.ParseTemplate(template);
-        var entry = new RouteEntry(routeTemplate, fragment, component);
-        _routes[id] = entry;
+        if (routes.TryGetValue(route.Id, out RouteEntry value)) return value;
+
+        var entry = new RouteEntry(TemplateParser.ParseTemplate(route.FullTemplate), route);
+        routes[route.Id] = entry;
 
         return entry;
     }
 
-    public void Remove(string id) => _routes.Remove(id);
-
-    public RouteEntry AddNull(string id, string template, RenderFragment fragment, Type component)
+    public void Remove(string id)
     {
-        if (_nullRoutes.TryGetValue(id, out RouteEntry value)) return value;
+        if (_routes.Remove(id)) return;
 
-        var routeTemplate = TemplateParser.ParseTemplate(template);
-        var entry = new RouteEntry(routeTemplate, fragment, component);
-        _nullRoutes[id] = entry;
-
-        return entry;
+        _nullRoutes.Remove(id);
     }
 
-    public void RemoveNull(string id) => _nullRoutes.Remove(id);
 
-    public void FindMatch(RouteContext routeContext)
+    public RouteEntry FindMatch(RouteContext routeContext)
     {
         foreach (var (key, routeEntry) in _routes)
         {
-            routeEntry.Match(routeContext);
-
-            if (routeContext.Fragment is not null || routeContext.Component is not null)
+            if (routeEntry.Match(routeContext))
             {
                 routeContext.Id = key;
-                return;
+                return routeEntry;
             }
         }
 
         // TODO: find the best match based on nested routes
-        foreach (var (key, routeEntry) in _nullRoutes)
+        foreach (var (key, routeEntry) in _nullRoutes.Reverse())
         {
-            routeEntry.Match(routeContext);
-
-            if (routeContext.Fragment is not null || routeContext.Component is not null)
+            var template = routeEntry.Route.FullTemplate;
+            if (string.IsNullOrEmpty(template) || routeContext.Path.StartsWith(template))
             {
                 routeContext.Id = key;
-                return;
+                routeContext.Route = routeEntry.Route;
+                return routeEntry;
             }
+
+            //if (routeEntry.Match(routeContext))
+            //{
+            //    routeContext.Id = key;
+            //    return routeEntry;
+            //}
         }
+
+        return RouteEntry.Empty;
     }
 
-    public static void Match(RouteContext routeContext, string id, RouteEntry routeEntry)
+    public static bool Match(RouteContext routeContext, string id, RouteEntry routeEntry)
     {
-        routeEntry.Match(routeContext);
-
-        if (routeContext.Fragment is not null || routeContext.Component is not null)
+        if (routeEntry.Match(routeContext))
         {
             routeContext.Id = id;
+            return true;
         }
+        return false;
     }
 }
